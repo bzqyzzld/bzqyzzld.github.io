@@ -1,0 +1,718 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="DeLiu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="lru(Least Recently Used)最近最少使用算法,即每次使用新的key或者使用老的key进行查询的时候都会把这个key移动到链表的左边，如果空间不够了的话就会删除右边的元素大概的原理图如下 python算法的实现12345678910111213141516171819202122232425262728293031323334353637383940414243444546474">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lru算法的实现">
+<meta property="og:url" content="https://bzqyzzld.github.io/2023/07/01/lru%E7%AE%97%E6%B3%95/index.html">
+<meta property="og:site_name" content="我的小站">
+<meta property="og:description" content="lru(Least Recently Used)最近最少使用算法,即每次使用新的key或者使用老的key进行查询的时候都会把这个key移动到链表的左边，如果空间不够了的话就会删除右边的元素大概的原理图如下 python算法的实现12345678910111213141516171819202122232425262728293031323334353637383940414243444546474">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://bzqyzzld.github.io/img/lru.jpg">
+<meta property="article:published_time" content="2023-07-01T14:00:00.000Z">
+<meta property="article:modified_time" content="2024-12-06T15:04:02.550Z">
+<meta property="article:author" content="DeLiu">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="lru">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://bzqyzzld.github.io/img/lru.jpg">
+  
+  
+  
+  <title>lru算法的实现 - 我的小站</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"bzqyzzld.github.io","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"BU4eoSp4BGzAeIz1CqmQM1wb-gzGzoHsz","app_key":"uFS2771TLv34KG66NYnconNw","server_url":"https://bu4eosp4.lc-cn-n1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>我的小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="lru算法的实现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-07-01 22:00" pubdate>
+          2023年7月1日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          26 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">lru算法的实现</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="lru-Least-Recently-Used-最近最少使用算法-即每次使用新的key或者使用老的key进行查询的时候都会把这个key移动到链表的左边，如果空间不够了的话就会删除右边的元素"><a href="#lru-Least-Recently-Used-最近最少使用算法-即每次使用新的key或者使用老的key进行查询的时候都会把这个key移动到链表的左边，如果空间不够了的话就会删除右边的元素" class="headerlink" title="lru(Least Recently Used)最近最少使用算法,即每次使用新的key或者使用老的key进行查询的时候都会把这个key移动到链表的左边，如果空间不够了的话就会删除右边的元素"></a>lru(Least Recently Used)最近最少使用算法,即每次使用新的key或者使用老的key进行查询的时候都会把这个key移动到链表的左边，如果空间不够了的话就会删除右边的元素</h2><h2 id="大概的原理图如下"><a href="#大概的原理图如下" class="headerlink" title="大概的原理图如下"></a>大概的原理图如下</h2><p><img src="/img/lru.jpg" srcset="/img/loading.gif" lazyload alt="原理"></p>
+<h3 id="python算法的实现"><a href="#python算法的实现" class="headerlink" title="python算法的实现"></a>python算法的实现</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> sys<br><span class="hljs-keyword">from</span> collections <span class="hljs-keyword">import</span> deque<br><span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> <span class="hljs-type">Optional</span>, <span class="hljs-type">Any</span><br><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Event</span>:<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">do_action</span>(<span class="hljs-params">self, key: <span class="hljs-built_in">str</span></span>):<br>        <span class="hljs-keyword">pass</span><br><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Cache</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    规定如果数据被使用(查询,增加)则会把数据移动到左边,如果容量不够了的话会优先删除右边的数据</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, max_bytes: <span class="hljs-built_in">int</span></span>):<br>        self.max_bytes = max_bytes<br>        self.cur_bytes: <span class="hljs-built_in">int</span> = <span class="hljs-number">0</span><br>        self.lst: deque = deque([])<br>        self.cache = <span class="hljs-built_in">dict</span>()     <span class="hljs-comment"># key, value</span><br>        self.OnEvent: <span class="hljs-type">Optional</span>[Event] = <span class="hljs-literal">None</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get</span>(<span class="hljs-params">self, key: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-type">Any</span>:<br>        <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        返回对应key的值，并且把key移动到队尾</span><br><span class="hljs-string">        :param key:</span><br><span class="hljs-string">        :return:</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        value = <span class="hljs-literal">None</span><br>        <span class="hljs-keyword">if</span> key <span class="hljs-keyword">in</span> self.cache:<br>            value = self.cache.get(key)<br>            <span class="hljs-comment"># 移动到队尾</span><br>            self.lst.remove(key)<br>            self.lst.appendleft(key)<br>        <span class="hljs-keyword">return</span> value<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">remove_oldest</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-comment"># 删除队首的数据</span><br>        <span class="hljs-keyword">if</span> self.lst:<br>            key = self.lst.pop()<br>            value = self.cache[key]<br>            <span class="hljs-keyword">del</span> self.cache[key]<br><br>            <span class="hljs-comment"># 重新计算剩下的数据大小</span><br>            self.cur_bytes -= sys.getsizeof(key) + sys.getsizeof(value)<br><br>            <span class="hljs-comment"># 调用回调函数</span><br>            self.OnEvent.do_action(key)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">add</span>(<span class="hljs-params">self, key, value</span>):<br>        <span class="hljs-keyword">if</span> key <span class="hljs-keyword">in</span> self.cache:<br>            old_value = self.cache[key]<br>            extra_size = -sys.getsizeof(old_value) + sys.getsizeof(value)<br>            self.cache[key] = value<br><br>            <span class="hljs-comment"># 删除key</span><br>            self.lst.remove(key)<br>        <span class="hljs-keyword">else</span>:<br>            self.cache[key] = value<br>            extra_size = sys.getsizeof(key) + sys.getsizeof(value)<br><br>        <span class="hljs-comment"># 把key移动到左边</span><br>        self.lst.appendleft(key)<br><br>        <span class="hljs-comment"># 重新计算缓存的大小</span><br>        self.cur_bytes += extra_size<br><br>        <span class="hljs-comment"># 判断是否超容</span><br>        <span class="hljs-keyword">while</span> self.cur_bytes &gt; self.max_bytes:<br>            self.remove_oldest()<br><br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="golang算法的实现"><a href="#golang算法的实现" class="headerlink" title="golang算法的实现"></a>golang算法的实现</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;container/list&quot;</span><br>	<span class="hljs-string">&quot;fmt&quot;</span><br>)<br><br><span class="hljs-comment">// lru算法的实现，lru(Least Recently Used), 最近最少使用，即当内存不够的时候就淘汰最近最少使用的数据</span><br><br><span class="hljs-comment">/*</span><br><span class="hljs-comment">缓存结构体</span><br><span class="hljs-comment">*/</span><br><span class="hljs-keyword">type</span> Cache <span class="hljs-keyword">struct</span> &#123;<br>	maxBytes  <span class="hljs-type">int64</span><br>	nBytes    <span class="hljs-type">int64</span><br>	ll        *list.List<br>	cache     <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*list.Element<br>	OnEvicted <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(key <span class="hljs-type">string</span>, value Value)</span></span><br>&#125;<br><br><span class="hljs-comment">// NewCache 创建新的cache</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewCache</span><span class="hljs-params">(maxBytes <span class="hljs-type">int64</span>, onEvicted <span class="hljs-keyword">func</span>(<span class="hljs-type">string</span>, Value)</span></span>) *Cache &#123;<br>	r := <span class="hljs-built_in">new</span>(Cache)<br>	r.maxBytes = maxBytes<br>	r.ll = list.New()<br>	r.cache = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*list.Element)<br>	r.OnEvicted = onEvicted<br>	<span class="hljs-keyword">return</span> r<br>&#125;<br><br><span class="hljs-comment">// Get 获取对应的值, 如果存在则返回对应的值， 并且把元素移动到队首</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Cache)</span></span> Get(key <span class="hljs-type">string</span>) (value Value, ok <span class="hljs-type">bool</span>) &#123;<br>	<span class="hljs-keyword">if</span> ele, ok := c.cache[key]; ok &#123;<br>		c.ll.MoveToFront(ele)<br>		kv := ele.Value.(*entry)<br>		<span class="hljs-keyword">return</span> kv.value, <span class="hljs-literal">true</span><br>	&#125;<br>	<span class="hljs-keyword">return</span><br>&#125;<br><br><span class="hljs-comment">// RemoveOldest 移除最近很少访问的节点，删除队尾的数据，而且如果有回调函数还会回调函数</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Cache)</span></span> RemoveOldest() &#123;<br>	ele := c.ll.Back()<br>	<span class="hljs-keyword">if</span> ele != <span class="hljs-literal">nil</span> &#123;<br>		c.ll.Remove(ele)<br>		kv := ele.Value.(*entry)<br>		<span class="hljs-built_in">delete</span>(c.cache, kv.key)<br>		c.nBytes -= <span class="hljs-type">int64</span>(<span class="hljs-built_in">len</span>(kv.key)) + <span class="hljs-type">int64</span>(kv.value.Len())<br>		<span class="hljs-keyword">if</span> c.OnEvicted != <span class="hljs-literal">nil</span> &#123;<br>			c.OnEvicted(kv.key, kv.value)<br>		&#125;<br>	&#125;<br>&#125;<br><br><span class="hljs-comment">// Add 新增数据</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Cache)</span></span> Add(key <span class="hljs-type">string</span>, value Value) &#123;<br>	<span class="hljs-keyword">if</span> ele, ok := c.cache[key]; ok &#123;<br>		c.ll.MoveToFront(ele)<br>		kv := ele.Value.(*entry)<br>		c.nBytes += <span class="hljs-type">int64</span>(value.Len()) - <span class="hljs-type">int64</span>(kv.value.Len())<br>		kv.value = value<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		ele := c.ll.PushFront(&amp;entry&#123;key, value&#125;)<br>		c.cache[key] = ele<br>		c.nBytes += <span class="hljs-type">int64</span>(<span class="hljs-built_in">len</span>(key)) + <span class="hljs-type">int64</span>(value.Len())<br>	&#125;<br><br>	<span class="hljs-keyword">for</span> c.maxBytes &lt; c.nBytes &#123;<br>		c.RemoveOldest()<br>	&#125;<br>&#125;<br><br><span class="hljs-keyword">type</span> entry <span class="hljs-keyword">struct</span> &#123;<br>	key   <span class="hljs-type">string</span><br>	value Value<br>&#125;<br><br><span class="hljs-keyword">type</span> Value <span class="hljs-keyword">interface</span> &#123;<br>	Len() <span class="hljs-type">int</span><br>&#125;<br><br><span class="hljs-keyword">type</span> String <span class="hljs-type">string</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(d String)</span></span> Len() <span class="hljs-type">int</span> &#123;<br>	<span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(d)<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E7%AE%97%E6%B3%95/">#算法</a>
+      
+        <a href="/tags/lru/">#lru</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>lru算法的实现</div>
+      <div>https://bzqyzzld.github.io/2023/07/01/lru算法/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>DeLiu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年7月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/07/06/%E4%B9%A6%E7%B1%8D%E3%80%8A%E6%B5%8B%E8%AF%95%E5%B7%A5%E7%A8%8B%E5%B8%88%E5%85%A8%E6%A0%88%E6%8A%80%E6%9C%AF%E8%BF%9B%E9%98%B6%E4%B8%8E%E5%AE%9E%E8%B7%B5%E3%80%8B%E9%98%85%E8%AF%BB/" title="《测试工程师全栈技术进阶与实践》">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">《测试工程师全栈技术进阶与实践》</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/06/20/trie%E6%A0%91%E7%9A%84%E5%AE%9E%E7%8E%B0/" title="trie树的实现">
+                        <span class="hidden-mobile">trie树的实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"BU4eoSp4BGzAeIz1CqmQM1wb-gzGzoHsz","appKey":"uFS2771TLv34KG66NYnconNw","path":"window.location.pathname","placeholder":"评论千万条, 友善第一条","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
